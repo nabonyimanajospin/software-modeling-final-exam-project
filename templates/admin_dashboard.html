@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="animate__animated animate__fadeIn">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4"><i class="fas fa-user-shield"></i> Admin Dashboard</h1>
+            <p class="text-white">Welcome back, {{ current_user.name }}!</p>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-md-4 mb-4 animate__animated animate__fadeInUp" style="animation-delay: 0.1s;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1">Total Students</p>
+                        <h3 class="mb-0">{{ total_students }}</h3>
+                    </div>
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4 animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1">Total Teachers</p>
+                        <h3 class="mb-0">{{ total_teachers }}</h3>
+                    </div>
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4 animate__animated animate__fadeInUp" style="animation-delay: 0.3s;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1">Total Users</p>
+                        <h3 class="mb-0">{{ total_users }}</h3>
+                    </div>
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card animate__animated animate__fadeInUp" style="animation-delay: 0.4s;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('manage_users') }}" class="btn btn-primary btn-lg w-100">
+                                <i class="fas fa-users fa-2x mb-2"></i><br>
+                                Manage Users
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-success btn-lg w-100" data-bs-toggle="modal" data-bs-target="#notificationModal">
+                                <i class="fas fa-bell fa-2x mb-2"></i><br>
+                                Send Notification
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('backup_database') }}" class="btn btn-warning btn-lg w-100">
+                                <i class="fas fa-database fa-2x mb-2"></i><br>
+                                Backup Data
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-info btn-lg w-100" onclick="generateReport()">
+                                <i class="fas fa-file-pdf fa-2x mb-2"></i><br>
+                                Generate Reports
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Notifications -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card animate__animated animate__fadeInUp" style="animation-delay: 0.5s;">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-bell"></i> Recent Notifications</h5>
+                </div>
+                <div class="card-body">
+                    {% if notifications %}
+                        <div class="list-group">
+                            {% for notif in notifications %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ notif.title }}</h6>
+                                    <small>{{ notif.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                </div>
+                                <p class="mb-1">{{ notif.message }}</p>
+                                <small class="text-muted">To: {{ notif.recipient_type }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted">No notifications yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Send Notification Modal -->
+<div class="modal fade" id="notificationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('send_notification') }}">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-bell"></i> Send Notification</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-control" name="message" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Send To</label>
+                        <select class="form-select" name="recipient_type" required>
+                            <option value="all">All Users</option>
+                            <option value="students">All Students</option>
+                            <option value="teachers">All Teachers</option>
+                            <option value="parents">All Parents</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Send</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function generateReport() {
+    window.location.href = '/teacher/generate-report?type=grades';
+}
+</script>
+{% endblock %}
