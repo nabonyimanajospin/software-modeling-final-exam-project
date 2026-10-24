@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Enter Grades{% endblock %}
+
+{% block content %}
+<div class="animate__animated animate__fadeIn">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4 text-white"><i class="fas fa-edit"></i> Enter Grades</h1>
+            <p class="text-white">Your Subject: <strong>{{ teacher.subject }}</strong></p>
+            <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-light">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card animate__animated animate__fadeInUp">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-star"></i> Grade Entry Form</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> <strong>Note:</strong> You teach <strong>{{ teacher.subject }}</strong>. 
+                        You can enter grades for other subjects, but it's recommended to only grade your own subject.
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('enter_grades') }}" id="gradeForm">
+                        <div class="mb-3">
+                            <label class="form-label">Select Student *</label>
+                            <select class="form-select form-select-lg" name="student_id" required>
+                                <option value="">-- Choose Student --</option>
+                                {% for student in students %}
+                                <option value="{{ student.id }}">{{ student.student_id }} - {{ student.name }} ({{ student.class_name }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Subject *</label>
+                            <input type="text" class="form-control form-control-lg" name="subject" 
+                                   placeholder="Enter subject name" value="{{ teacher.subject }}" required>
+                            <div class="form-text">
+                                <i class="fas fa-lightbulb"></i> Your subject is automatically filled. You can change it if needed.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Score (0-100) *</label>
+                            <input type="number" class="form-control form-control-lg" name="score" 
+                                   min="0" max="100" step="0.01" placeholder="Enter score" required id="scoreInput">
+                            <div class="form-text">
+                                Current Grade: <span id="letterGrade" class="badge bg-secondary">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Term *</label>
+                            <select class="form-select form-select-lg" name="term" required>
+                                <option value="">-- Select Term --</option>
+                                <option value="Term 1">Term 1</option>
+                                <option value="Term 2">Term 2</option>
+                                <option value="Term 3">Term 3</option>
+                                <option value="Final Exam">Final Exam</option>
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> Submit Grade
+                            </button>
+                            <button type="reset" class="btn btn-secondary">
+                                <i class="fas fa-redo"></i> Reset Form
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Real-time grade calculation
+document.getElementById('scoreInput').addEventListener('input', function() {
+    const score = parseFloat(this.value);
+    const gradeBadge = document.getElementById('letterGrade');
+    
+    if (isNaN(score)) {
+        gradeBadge.textContent = '-';
+        gradeBadge.className = 'badge bg-secondary';
+        return;
+    }
+    
+    let letter, color;
+    if (score >= 90) {
+        letter = 'A'; color = 'success';
+    } else if (score >= 80) {
+        letter = 'B'; color = 'primary';
+    } else if (score >= 70) {
+        letter = 'C'; color = 'info';
+    } else if (score >= 60) {
+        letter = 'D'; color = 'warning';
+    } else {
+        letter = 'F'; color = 'danger';
+    }
+    
+    gradeBadge.textContent = letter;
+    gradeBadge.className = 'badge bg-' + color;
+});
+
+// Form validation
+document.getElementById('gradeForm').addEventListener('submit', function(e) {
+    const score = parseFloat(document.getElementById('scoreInput').value);
+    
+    if (score < 0 || score > 100) {
+        e.preventDefault();
+        alert('Score must be between 0 and 100!');
+        return false;
+    }
+});
+</script>
+{% endblock %}
